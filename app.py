@@ -24,7 +24,7 @@ def token_required(f):
     def decorator(*args, **kwargs):
         token = None
         if 'Authorization' in request.headers:
-            token = request.headers['Authorization'].split(" ")[1]
+            token = request.headers['Authorization']
 
         if not token:
             return jsonify({'message': 'No estas autorizado para esto'})
@@ -97,7 +97,7 @@ def login():
                     estudiante['_id']), 'cedula': estudiante['cedula']}, app.config['SECRET_KEY'], algorithm="HS256") # .decode('utf-8')
                 response = ({
                     'token': token,
-                    'cedula': estudiante['cedula']
+                    'nombre' : estudiante['nombre'] + ' ' + estudiante['apellido']
                 })
                 return response
         else:
@@ -126,12 +126,13 @@ def getPreguntas(self, number):
 @token_required
 def postResultados(self):
 
-    token = request.headers['Authorization'].split(" ")[1]
+    token = request.headers['Authorization']
     data = jwt.decode(token, app.config['SECRET_KEY'], algorithms="HS256")
     # current_user = mongo.db.estudiantes.find_one({"_id": ObjectId(data['_id'])})
 
     puntaje = request.json['puntaje']
     preguntas = request.json['preguntas']
+    claseID = request.json['claseID']
 
     if(puntaje and preguntas):
 
@@ -139,7 +140,7 @@ def postResultados(self):
 
         print({'estudianteID' : str(data['_id']), 'puntaje' : puntaje, 'fecha' : fecha, 'preguntas' : preguntas})
 
-        newPuntaje = mongo.db.resultados.insert_one({'estudianteID' : str(data['_id']), 'puntaje' : puntaje, 'fecha' : fecha, 'preguntas' : preguntas})
+        newPuntaje = mongo.db.resultados.insert_one({'estudianteID' : str(data['_id']), 'puntaje' : puntaje, 'fecha' : fecha, 'preguntas' : preguntas, 'claseID' : claseID})
         print(newPuntaje.inserted_id)
 
         return {'message' : 'Resultados registrado con exito!!', 'resultado' : str(newPuntaje.inserted_id), 'status' : 200}
